@@ -1,0 +1,7 @@
+.idea/vcs.xml
+.idea/echo_server.iml
+.idea/inspectionProfiles/
+.idea/markdown-navigator/
+dump.rdb
+node_modules/
+package-lock.json
