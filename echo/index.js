@@ -1,25 +1,40 @@
 'use strict';
 
-const cluster = require('cluster'),
-  app = require('./app');
+const express = require('express'),
+    moment = require('moment'),
+    config = require('../config/local'),
+    queue = require('../queue'),
+    bodyParser = require('body-parser'),
+    app = express();
 
-if (cluster.isMaster) {
-  // Count the machine's CPUs
-  const cpuCount = require('os').cpus().length;
+app.use(bodyParser.json());
 
-  // Create a worker for each CPU
-  for (let i = 0; i < cpuCount; i += 1) {
-    cluster.fork();
-  }
+app.post('/api/echo', (req, res) => {
+    const order = req.body;
+    const success_res = {
+        error: null,
+        success: true,
+        message: 'Successfully created order',
+        order
+    };
 
-  cluster.on('online', function(worker) {
-    console.log('Worker ' + worker.process.pid + ' is online');
-  });
+    queue.create(order, (err) => {
+        if (err) {
+            return res.json({
+                error: err,
+                success: false,
+                message: 'Could not create payment',
+            });
+        } else {
+            return res.json(success_res);
+        }
+    });
+});
 
-  cluster.on('death', function(worker) {
-    console.log('worker ' + worker.pid + ' died');
-    cluster.fork();
-  });
-} else {
-  app.run();
-}
+app.listen(config.echo.port, () => {
+    console.log(`Echo listening on port ${config.echo.port}!`);
+});
+
+setTimeout(() => {
+  throw new Error('something bad happened');
+},  31000);
